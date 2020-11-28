@@ -16,36 +16,47 @@ export default class NoteScreen extends Component {
             }
         }
     }
-    save = async () => {
-        if (this.state.values.note.length == 0)
-            return;
-        if (this.state.values.name == '') {
-            this.setState({ values: { ...this.state.values, name: Date.now().toString() } });
+    findIndex = (arr) => {
+        for (i = 0; i < arr.length; i++) {
+            if (arr[i].name == this.state.values.name) {
+                return i;
+            }
         }
+        return -1;
+    }
+    save = async () => {
         try {
+            var index = -1;
+            if (this.state.values.note.length == 0) {
+                if (this.state.values.name == '') {
+                    return;
+                }
+            }
+            if (this.state.values.name == '') {
+                this.setState({ values: { ...this.state.values, name: Date.now().toString() } });
+            }
             const notesValueRaw = await AsyncStorage.getItem("notes");
             const notesValue = JSON.parse(notesValueRaw) ?? [];
             if (!notesValue.map(w => w.name == this.state.values.name).includes(true)) {
                 notesValue.push(this.state.values);
             }
             else {
-                var index = -1;
-                for (i = 0; i < notesValue.length; i++) {
-                    if (notesValue[i].name == this.state.values.name) {
-                        index = i;
-                        break;
-                    }
-                }
+                index = this.findIndex(notesValue);
                 if (index > -1) {
-                    notesValue.splice(index, 1, this.state.values)
+                    if (this.state.values.note.length > 0) {
+                        notesValue.splice(index, 1, this.state.values);
+                    }
+                    else {
+                        notesValue.splice(index, 1);
+                    }
                 }
             }
             await AsyncStorage.setItem(
                 "notes",
                 JSON.stringify(notesValue)
             );
-        } catch (error) {
-            console.log(error)
+        } catch (e) {
+            console.error(e)
         }
 
 
@@ -67,7 +78,9 @@ export default class NoteScreen extends Component {
                         <TouchableOpacity style={styles.button}
                             onPress={() => {
                                 this.save().then(() => {
-                                    Actions.home();
+                                    //Actions.home()
+                                    Actions.reset("home");
+                                    //this.props.navigation.popToTop();
                                 });
                             }}
                         >

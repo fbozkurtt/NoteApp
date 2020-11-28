@@ -1,8 +1,9 @@
 import React, { useState, useEffect, Component } from 'react'
-import { View, Text, ScrollView, SafeAreaContent, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, ScrollView, SafeAreaContent, StyleSheet, TouchableOpacity, Image, Dimensions, Animated } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage'
 import { Actions } from 'react-native-router-flux';
 import { SwipeListView } from 'react-native-swipe-list-view';
+import { TouchableHighlight } from 'react-native-gesture-handler';
 const { width, height } = Dimensions.get("window");
 
 export default class HomeScreen extends Component {
@@ -19,58 +20,53 @@ export default class HomeScreen extends Component {
     }
     read = async () => {
         try {
-            const notesValueRaw = await AsyncStorage.getItem('notes');
+            const notesValueRaw = await AsyncStorage.getItem("notes");
+            const notesValue = JSON.parse(notesValueRaw) ?? [];
+            console.log(notesValue);
+            for (var i = 0; i < notesValue.length; i++) {
+                notesValue[i].key = `${i}`;
+            }
             this.setState({
-                notes: JSON.parse(notesValueRaw)
+                notes: notesValue
             })
-            console.log(this.state.notes)
         } catch (e) {
-            console.log(e)
+            console.error(e)
         }
     }
 
-
-    renderHiddenItem = (data, rowMap) => (
+    renderHiddenItem = () => (
         <View style={styles.rowBack}>
-            {/* <Text>Left</Text> */}
-            {/* <TouchableOpacity
-                style={[styles.backRightBtn, styles.backRightBtnLeft]}
-                onPress={() => this.closeRow(rowMap, data.item.key)}
-            >
-                <Text style={styles.backTextWhite}>Close</Text>
-            </TouchableOpacity> */}
-            <TouchableOpacity
-                style={[styles.backRightBtn, styles.backRightBtnRight]}
-                onPress={() => this.deleteRow(rowMap, data.item.key)}
-            >
+            <View style={[styles.backRightBtn, styles.backRightBtnRight]}>
                 <Text style={styles.backTextWhite}>SİL</Text>
-            </TouchableOpacity>
+            </View>
         </View>
     );
 
-    deleteRow = async (rowMap, rowKey) => {
-        this.closeRow(rowMap, rowKey);
-        const notesValue = [...this.state.notes];
-        var o = notesValue.map(w => w.key === rowKey)[0];
-        var i = notesValue.indexOf(o);
-        notesValue.splice(i, 1)
-        try {
-            await AsyncStorage.setItem(
-                "notes",
-                JSON.stringify(notesValue)
-            );
-        } catch (error) {
-            console.log(error)
-        }
-        this.setState({ notes: notesValue });
-    };
+    // deleteRow = async (rowMap, rowKey) => {
+    //     this.closeRow(rowMap, rowKey);
+    //     const notesValue = [...this.state.notes];
+    //     var o = notesValue.map(w => w.key === rowKey)[0];
+    //     var i = notesValue.indexOf(o);
+    //     notesValue.splice(i, 1)
+    //     try {
+    //         await AsyncStorage.setItem(
+    //             "notes",
+    //             JSON.stringify(notesValue)
+    //         );
+    //     } catch (e) {
+    //         console.error(e)
+    //     }
+    //     this.setState({ notes: notesValue });
+    // };
+
     closeRow = (rowMap, rowKey) => {
         if (rowMap[rowKey]) {
             rowMap[rowKey].closeRow();
         }
     };
+
     renderItem = data => (
-        <TouchableOpacity style={styles.rowFront}
+        <TouchableHighlight style={styles.rowFront}
             underlayColor={'#AAA'}
             onPress={() => Actions.note({ values: { name: data.item.name, note: data.item.note } })}>
             <View>
@@ -78,8 +74,44 @@ export default class HomeScreen extends Component {
                     {data.item.note.slice(0, 40)}
                 </Text>
             </View>
-        </TouchableOpacity>
+        </TouchableHighlight>
     );
+    onSwipeValueChange = async (swipeData) => {
+        try {
+            var rowTranslateAnimatedValues = {};
+            Array(this.state.notes.length)
+                .fill('')
+                .forEach((_, i) => {
+                    rowTranslateAnimatedValues[`${i}`] = new Animated.Value(1);
+                });
+            //console.log(rowTranslateAnimatedValues);
+            const { key, value } = swipeData;
+            if (
+                value < -Dimensions.get('window').width &&
+                !this.animationIsRunning
+            ) {
+                this.animationIsRunning = true;
+                Animated.timing(rowTranslateAnimatedValues[key], {
+                    toValue: 0,
+                    duration: 200,
+                    useNativeDriver: false,
+                }).start(() => {
+                    const notesValue = [...this.state.notes];
+                    var i = notesValue.findIndex(item => item.key === key);
+                    notesValue.splice(i, 1)
+                    AsyncStorage.setItem(
+                        "notes",
+                        JSON.stringify(notesValue)
+                    ).then(() => {
+                        this.setState({ notes: notesValue });
+                    });
+                    this.animationIsRunning = false;
+                });
+            }
+        } catch (e) {
+            console.error(e)
+        }
+    };
     render() {
         return (
             <View style={styles.container}>
@@ -94,12 +126,18 @@ export default class HomeScreen extends Component {
                             renderHiddenItem={this.renderHiddenItem}
                             // renderSectionHeader={renderSectionHeader}
                             // leftOpenValue={75}
-                            rightOpenValue={-75}
+                            // rightOpenValue={-75}
+                            // previewRowKey={'0'}
+                            // previewOpenValue={-40}
+                            // previewOpenDelay={3000}
+                            rightOpenValue={-Dimensions.get('window').width}
                             previewRowKey={'0'}
                             previewOpenValue={-40}
-                            previewOpenDelay={3000}
-                            disableRightSwipe={true}
-
+                            previewOpenDelay={1000}
+                            onSwipeValueChange={this.onSwipeValueChange}
+                            useNativeDriver={false}
+                            disableRightSwipe
+                        //keyExtractor={(item, index) => item.key}
                         />
                     </View>
                 }
