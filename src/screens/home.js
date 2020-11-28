@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Component } from 'react'
-import { View, Text, ScrollView, SafeAreaContent, StyleSheet, TouchableOpacity, Image, Dimensions, Animated } from 'react-native';
+import { View, Text, ScrollView, SafeAreaContent, StyleSheet, TouchableOpacity, Image, Dimensions, Animated, TouchableHighlightBase } from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage'
 import { Actions } from 'react-native-router-flux';
 import { SwipeListView } from 'react-native-swipe-list-view';
@@ -11,13 +11,15 @@ export default class HomeScreen extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            notes: []
+            notes: [],
+            rowTranslateAnimatedValues: []
         }
-    }
 
+    }
     componentDidMount() {
         this.read();
     }
+
     read = async () => {
         try {
             const notesValueRaw = await AsyncStorage.getItem("notes");
@@ -26,9 +28,18 @@ export default class HomeScreen extends Component {
             for (var i = 0; i < notesValue.length; i++) {
                 notesValue[i].key = `${i}`;
             }
+
+            var rowTranslateAnimatedValues = [this.state.notes.length];
+            Array(notesValue.length)
+                .fill('')
+                .forEach((_, i) => {
+                    rowTranslateAnimatedValues[`${i}`] = new Animated.Value(1);
+                });
             this.setState({
-                notes: notesValue
+                notes: notesValue,
+                rowTranslateAnimatedValues: rowTranslateAnimatedValues
             })
+            console.log(this.state.rowTranslateAnimatedValues);
         } catch (e) {
             console.error(e)
         }
@@ -66,45 +77,56 @@ export default class HomeScreen extends Component {
     };
 
     renderItem = data => (
-        <TouchableHighlight style={styles.rowFront}
-            underlayColor={'#AAA'}
-            onPress={() => Actions.note({ values: { name: data.item.name, note: data.item.note } })}>
-            <View>
-                <Text>
-                    {data.item.note.slice(0, 40)}
-                </Text>
-            </View>
-        </TouchableHighlight>
+        <Animated.View
+            style={[
+                styles.rowFrontContainer,
+                {
+                    height: this.state.rowTranslateAnimatedValues[data.item.key]
+                        .interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0, 50],
+                        }),
+                },
+            ]}
+        >
+            <TouchableOpacity style={styles.rowFront}
+                underlayColor={'#AAA'}
+                onPress={() => Actions.note({ values: { name: data.item.name, note: data.item.note } })}
+                activeOpacity={1}
+            >
+                <View>
+                    <Text>
+                        {data.item.note.slice(0, 40)}
+                    </Text>
+                </View>
+            </TouchableOpacity>
+        </Animated.View>
     );
     onSwipeValueChange = async (swipeData) => {
         try {
-            var rowTranslateAnimatedValues = {};
-            Array(this.state.notes.length)
-                .fill('')
-                .forEach((_, i) => {
-                    rowTranslateAnimatedValues[`${i}`] = new Animated.Value(1);
-                });
             //console.log(rowTranslateAnimatedValues);
             const { key, value } = swipeData;
+            //console.log(key);
             if (
                 value < -Dimensions.get('window').width &&
                 !this.animationIsRunning
             ) {
                 this.animationIsRunning = true;
-                Animated.timing(rowTranslateAnimatedValues[key], {
+                Animated.timing(this.state.rowTranslateAnimatedValues[key], {
                     toValue: 0,
                     duration: 200,
                     useNativeDriver: false,
                 }).start(() => {
                     const notesValue = [...this.state.notes];
                     var i = notesValue.findIndex(item => item.key === key);
-                    notesValue.splice(i, 1)
-                    AsyncStorage.setItem(
-                        "notes",
-                        JSON.stringify(notesValue)
-                    ).then(() => {
-                        this.setState({ notes: notesValue });
-                    });
+                    console.log(i);
+                    // notesValue.splice(i, 1);
+                    // AsyncStorage.setItem(
+                    //     "notes",
+                    //     JSON.stringify(notesValue)
+                    // ).then(() => {
+                    //     this.setState({ notes: notesValue });
+                    // });
                     this.animationIsRunning = false;
                 });
             }
@@ -141,7 +163,7 @@ export default class HomeScreen extends Component {
                         />
                     </View>
                 }
-                <View style={{ alignItems: 'flex-end', flexDirection: 'column-reverse', flex: 3, position: 'relative' }}>
+                <View style={{ alignItems: 'flex-end', flexDirection: 'column-reverse', flex: 1, position: 'absolute', marginTop: height - 200 }}>
                     <TouchableOpacity style={styles.addButton}
                         onPress={() => { Actions.note({ values: { name: '' } }) }}
                     >
@@ -163,6 +185,9 @@ const styles = StyleSheet.create({
     },
     backTextWhite: {
         color: '#FFF',
+    },
+    rowFrontContainer: {
+
     },
     rowFront: {
         paddingLeft: 20,
