@@ -53,28 +53,11 @@ export default class HomeScreen extends Component {
         </View>
     );
 
-    // deleteRow = async (rowMap, rowKey) => {
-    //     this.closeRow(rowMap, rowKey);
-    //     const notesValue = [...this.state.notes];
-    //     var o = notesValue.map(w => w.key === rowKey)[0];
-    //     var i = notesValue.indexOf(o);
-    //     notesValue.splice(i, 1)
-    //     try {
-    //         await AsyncStorage.setItem(
-    //             "notes",
-    //             JSON.stringify(notesValue)
-    //         );
-    //     } catch (e) {
-    //         console.error(e)
+    // closeRow = (rowMap, rowKey) => {
+    //     if (rowMap[rowKey]) {
+    //         rowMap[rowKey].closeRow();
     //     }
-    //     this.setState({ notes: notesValue });
     // };
-
-    closeRow = (rowMap, rowKey) => {
-        if (rowMap[rowKey]) {
-            rowMap[rowKey].closeRow();
-        }
-    };
 
     renderItem = data => (
         <Animated.View
@@ -84,7 +67,7 @@ export default class HomeScreen extends Component {
                     height: this.state.rowTranslateAnimatedValues[data.item.key]
                         .interpolate({
                             inputRange: [0, 1],
-                            outputRange: [0, 50],
+                            outputRange: [0, 70],
                         }),
                 },
             ]}
@@ -106,11 +89,11 @@ export default class HomeScreen extends Component {
         try {
             //console.log(rowTranslateAnimatedValues);
             const { key, value } = swipeData;
-            //console.log(key);
             if (
                 value < -Dimensions.get('window').width &&
                 !this.animationIsRunning
             ) {
+                console.log(key, value);
                 this.animationIsRunning = true;
                 Animated.timing(this.state.rowTranslateAnimatedValues[key], {
                     toValue: 0,
@@ -118,15 +101,16 @@ export default class HomeScreen extends Component {
                     useNativeDriver: false,
                 }).start(() => {
                     const notesValue = [...this.state.notes];
-                    var i = notesValue.findIndex(item => item.key === key);
-                    notesValue.splice(i, 1);
+                    var o = notesValue.map(w => w.key === key)[0];
+                    var i = notesValue.indexOf(o);
+                    notesValue.splice(key, 1);
                     AsyncStorage.setItem(
                         "notes",
                         JSON.stringify(notesValue)
                     ).then(() => {
                         this.setState({ notes: notesValue });
+                        this.animationIsRunning = false;
                     });
-                    this.animationIsRunning = false;
                 });
             }
         } catch (e) {
@@ -162,7 +146,7 @@ export default class HomeScreen extends Component {
                         />
                     </View>
                 }
-                <View style={{ alignItems: 'flex-end', flexDirection: 'column-reverse', flex: 1, position: 'absolute', marginTop: height - (height / 3), marginLeft: width - (width / 4) }}>
+                <View style={{ alignItems: 'flex-end', flexDirection: 'column-reverse', flex: 1, position: 'absolute', marginTop: height - (height / 5), marginLeft: width - (width / 4) }}>
                     <TouchableOpacity style={styles.addButton}
                         onPress={() => { Actions.note({ values: { name: '' } }) }}
                     >
@@ -186,28 +170,35 @@ const styles = StyleSheet.create({
         color: '#FFF',
     },
     rowFrontContainer: {
-
     },
     rowFront: {
-        paddingLeft: 20,
-        backgroundColor: '#FAFAFA',
-        borderColor: 'gray',
-        borderBottomWidth: 0.5,
-        borderRadius: 10,
-        justifyContent: 'center',
-        height: 70,
-        marginTop: 3,
+        // paddingLeft: 20,
+        // backgroundColor: 'yellow',
+        // borderColor: 'gray',
+        // borderBottomWidth: 0.5,
+        // borderRadius: 10,
+        // justifyContent: 'center',
+        // height: 70,
+        // marginTop: 0,
+        // marginLeft: 5,
+        // marginRight: 5,
+        // alignItems:'flex-start'
+        // // shadowColor: "#000",
+        // // shadowOffset: {
+        // //     width: 0,
+        // //     height: 5,
+        // // },
+        // // shadowOpacity: 1,
+        // // shadowRadius: 3.84,
+        // // elevation: 1,
+        backgroundColor: '#e3e8fc',
+        height: 65,
+        marginTop: 5,
+        paddingLeft: 15,
         marginLeft: 5,
         marginRight: 5,
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 5,
-        },
-        shadowOpacity: 1,
-        shadowRadius: 3.84,
-        elevation: 1,
-
+        justifyContent: 'center',
+        borderRadius: 10
     },
     rowBack: {
         alignItems: 'center',
@@ -217,7 +208,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingLeft: 15,
         marginLeft: 5,
-        marginTop: 3,
+        marginTop: 5,
         marginRight: 5,
         borderRadius: 10,
         borderColor: '#f2edf2',
@@ -248,7 +239,6 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: '25%'
 
     },
     addButton: {
