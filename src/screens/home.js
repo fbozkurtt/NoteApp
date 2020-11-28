@@ -119,14 +119,13 @@ export default class HomeScreen extends Component {
                 }).start(() => {
                     const notesValue = [...this.state.notes];
                     var i = notesValue.findIndex(item => item.key === key);
-                    console.log(i);
-                    // notesValue.splice(i, 1);
-                    // AsyncStorage.setItem(
-                    //     "notes",
-                    //     JSON.stringify(notesValue)
-                    // ).then(() => {
-                    //     this.setState({ notes: notesValue });
-                    // });
+                    notesValue.splice(i, 1);
+                    AsyncStorage.setItem(
+                        "notes",
+                        JSON.stringify(notesValue)
+                    ).then(() => {
+                        this.setState({ notes: notesValue });
+                    });
                     this.animationIsRunning = false;
                 });
             }
@@ -163,7 +162,7 @@ export default class HomeScreen extends Component {
                         />
                     </View>
                 }
-                <View style={{ alignItems: 'flex-end', flexDirection: 'column-reverse', flex: 1, position: 'absolute', marginTop: height - 200 }}>
+                <View style={{ alignItems: 'flex-end', flexDirection: 'column-reverse', flex: 1, position: 'absolute', marginTop: height - (height / 3), marginLeft: width - (width / 4) }}>
                     <TouchableOpacity style={styles.addButton}
                         onPress={() => { Actions.note({ values: { name: '' } }) }}
                     >
