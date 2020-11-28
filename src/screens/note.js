@@ -29,9 +29,16 @@ export default class NoteScreen extends Component {
                 notesValue.push(this.state.values);
             }
             else {
-                var o = notesValue.map(w => w.name === this.state.values.name)[0];
-                var i = notesValue.indexOf(o);
-                notesValue.splice(i, 1, this.state.values)
+                var index = -1;
+                for (i = 0; i < notesValue.length; i++) {
+                    if (notesValue[i].name == this.state.values.name) {
+                        index = i;
+                        break;
+                    }
+                }
+                if (index > -1) {
+                    notesValue.splice(index, 1, this.state.values)
+                }
             }
             await AsyncStorage.setItem(
                 "notes",
@@ -70,7 +77,7 @@ export default class NoteScreen extends Component {
                     <View style={{ alignItems: 'flex-start', }}>
                         <TouchableOpacity style={styles.button}
                             onPress={() => {
-                                this.save().then(()=>{
+                                this.save().then(() => {
                                     Actions.home();
                                 });
                             }}
