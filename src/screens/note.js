@@ -50,17 +50,6 @@ export default class NoteScreen extends Component {
 
 
     }
-
-    // save = () => {
-    //     Actions.home({ note: this.state.values.note, name: this.state.values.name })
-    // }
-
-    // onBtnClick=()=>{
-    //     this.setState({ name: Date.now().toString() });
-    //     if (this.state.name == '') {
-    //         this.setState({ name: Date.now().toString() });
-    //     }
-    // }
     note = (e) => {
         this.setState({
             values: {
@@ -99,7 +88,6 @@ export default class NoteScreen extends Component {
                         autoFocus={true}
                         multiline={true}
                         onChangeText={(value) => { this.setState({ values: { ...values, note: value } }) }}
-                    //onChangeText={(value) => this.note(value)}
                     ></TextInput>
                 </View>
             </ScrollView>
@@ -111,8 +99,6 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F0F0F0',
-        // justifyContent: 'center',
-        // alignItems: 'center',
     },
     addText: {
         fontSize: 18,
@@ -126,5 +112,4 @@ const styles = StyleSheet.create({
     button: {
         paddingLeft: 15
     }
-
 })
