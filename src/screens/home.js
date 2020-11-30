@@ -14,7 +14,6 @@ export default class HomeScreen extends Component {
             notes: [],
             rowTranslateAnimatedValues: []
         }
-
     }
     componentDidMount() {
         this.read();
@@ -25,9 +24,9 @@ export default class HomeScreen extends Component {
             const notesValueRaw = await AsyncStorage.getItem("notes");
             const notesValue = JSON.parse(notesValueRaw) ?? [];
             console.log(notesValue);
-            for (var i = 0; i < notesValue.length; i++) {
-                notesValue[i].key = `${i}`;
-            }
+            // for (var i = 0; i < notesValue.length; i++) {
+            //     notesValue[i].key = `${i}`;
+            // }
 
             var rowTranslateAnimatedValues = [this.state.notes.length];
             Array(notesValue.length)
@@ -89,11 +88,11 @@ export default class HomeScreen extends Component {
         try {
             //console.log(rowTranslateAnimatedValues);
             const { key, value } = swipeData;
+            console.log(key, value);
             if (
                 value < -Dimensions.get('window').width &&
                 !this.animationIsRunning
             ) {
-                console.log(key, value);
                 this.animationIsRunning = true;
                 Animated.timing(this.state.rowTranslateAnimatedValues[key], {
                     toValue: 0,
@@ -108,6 +107,9 @@ export default class HomeScreen extends Component {
                         "notes",
                         JSON.stringify(notesValue)
                     ).then(() => {
+                        for (var i = 0; i < notesValue.length; i++) {
+                            notesValue[i].key = `${i}`;
+                        }
                         this.setState({ notes: notesValue });
                         this.animationIsRunning = false;
                     });

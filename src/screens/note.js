@@ -38,7 +38,10 @@ export default class NoteScreen extends Component {
             const notesValueRaw = await AsyncStorage.getItem("notes");
             const notesValue = JSON.parse(notesValueRaw) ?? [];
             if (!notesValue.map(w => w.name == this.state.values.name).includes(true)) {
+                console.log("girdi");
                 notesValue.push(this.state.values);
+                notesValue[notesValue.length - 1].key = `${notesValue.length - 1}`;
+                //console.log(notesValue[-1]);
             }
             else {
                 index = this.findIndex(notesValue);
