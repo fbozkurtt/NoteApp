@@ -80,6 +80,9 @@ export default class HomeScreen extends Component {
                         disableInputs: true
                     })
                     Actions.note({ values: { name: data.item.name, note: data.item.note } })
+                    this.setState({
+                        disableInputs: false
+                    })
                 }}
                 activeOpacity={1}
                 disabled={this.state.disableInputs}
@@ -160,6 +163,9 @@ export default class HomeScreen extends Component {
                                 disableInputs: true
                             })
                             Actions.note({ values: { name: '' } })
+                            this.setState({
+                                disableInputs: false
+                            })
                         }}
                         disabled={this.state.disableInputs}
                     >
