@@ -12,23 +12,32 @@ export default class HomeScreen extends Component {
         super(props);
         this.state = {
             notes: [],
-            rowTranslateAnimatedValues: []
+            rowTranslateAnimatedValues: [],
+            disableInputs: false
         }
     }
-    componentDidMount() {
-        this.read();
+
+    async componentDidMount() {
+        await this.read();
+    }
+
+    findIndex = (arr, key) => {
+        for (var i = 0; i < arr.length; i++) {
+            if (arr[i].key === key) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     read = async () => {
         try {
             const notesValueRaw = await AsyncStorage.getItem("notes");
             const notesValue = JSON.parse(notesValueRaw) ?? [];
-            console.log(notesValue);
-            // for (var i = 0; i < notesValue.length; i++) {
-            //     notesValue[i].key = `${i}`;
-            // }
-
-            var rowTranslateAnimatedValues = [this.state.notes.length];
+            var rowTranslateAnimatedValues = [notesValue.length];
+            for (var i = 0; i < notesValue.length; i++) {
+                notesValue[i].key = `${i}`;
+            }
             Array(notesValue.length)
                 .fill('')
                 .forEach((_, i) => {
@@ -38,7 +47,6 @@ export default class HomeScreen extends Component {
                 notes: notesValue,
                 rowTranslateAnimatedValues: rowTranslateAnimatedValues
             })
-            console.log(this.state.rowTranslateAnimatedValues);
         } catch (e) {
             console.error(e)
         }
@@ -51,12 +59,6 @@ export default class HomeScreen extends Component {
             </View>
         </View>
     );
-
-    // closeRow = (rowMap, rowKey) => {
-    //     if (rowMap[rowKey]) {
-    //         rowMap[rowKey].closeRow();
-    //     }
-    // };
 
     renderItem = data => (
         <Animated.View
@@ -73,22 +75,32 @@ export default class HomeScreen extends Component {
         >
             <TouchableOpacity style={styles.rowFront}
                 underlayColor={'#AAA'}
-                onPress={() => Actions.note({ values: { name: data.item.name, note: data.item.note } })}
+                onPress={() => {
+                    this.setState({
+                        disableInputs: true
+                    })
+                    Actions.note({ values: { name: data.item.name, note: data.item.note } })
+                }}
                 activeOpacity={1}
+                disabled={this.state.disableInputs}
             >
                 <View>
-                    <Text>
-                        {data.item.note.slice(0, 40)}
+                    {data.item.note.length > 50 ?
+
+                        <Text>
+                            {data.item.note.slice(0, 50)}...
                     </Text>
+                        : <Text>
+                            {data.item.note}
+                        </Text>
+                    }
                 </View>
             </TouchableOpacity>
         </Animated.View>
     );
-    onSwipeValueChange = async (swipeData) => {
+    onSwipeValueChange = swipeData => {
         try {
-            //console.log(rowTranslateAnimatedValues);
             const { key, value } = swipeData;
-            console.log(key, value);
             if (
                 value < -Dimensions.get('window').width &&
                 !this.animationIsRunning
@@ -99,20 +111,20 @@ export default class HomeScreen extends Component {
                     duration: 200,
                     useNativeDriver: false,
                 }).start(() => {
-                    const notesValue = [...this.state.notes];
-                    var o = notesValue.map(w => w.key === key)[0];
-                    var i = notesValue.indexOf(o);
-                    notesValue.splice(key, 1);
-                    AsyncStorage.setItem(
-                        "notes",
-                        JSON.stringify(notesValue)
-                    ).then(() => {
-                        for (var i = 0; i < notesValue.length; i++) {
-                            notesValue[i].key = `${i}`;
-                        }
-                        this.setState({ notes: notesValue });
-                        this.animationIsRunning = false;
-                    });
+                    var notesValue = [...this.state.notes];
+                    var index = this.findIndex(notesValue, key);
+                    if (index > -1) {
+                        notesValue.splice(index, 1);
+                        AsyncStorage.setItem(
+                            "notes",
+                            JSON.stringify(notesValue)
+                        ).then(() => {
+                            this.setState({
+                                notes: notesValue,
+                            });
+                        });
+                    }
+                    this.animationIsRunning = false;
                 });
             }
         } catch (e) {
@@ -131,12 +143,6 @@ export default class HomeScreen extends Component {
                             data={this.state.notes}
                             renderItem={this.renderItem}
                             renderHiddenItem={this.renderHiddenItem}
-                            // renderSectionHeader={renderSectionHeader}
-                            // leftOpenValue={75}
-                            // rightOpenValue={-75}
-                            // previewRowKey={'0'}
-                            // previewOpenValue={-40}
-                            // previewOpenDelay={3000}
                             rightOpenValue={-Dimensions.get('window').width}
                             previewRowKey={'0'}
                             previewOpenValue={-40}
@@ -144,13 +150,18 @@ export default class HomeScreen extends Component {
                             onSwipeValueChange={this.onSwipeValueChange}
                             useNativeDriver={false}
                             disableRightSwipe
-                        //keyExtractor={(item, index) => item.key}
                         />
                     </View>
                 }
                 <View style={{ alignItems: 'flex-end', flexDirection: 'column-reverse', flex: 1, position: 'absolute', marginTop: height - (height / 5), marginLeft: width - (width / 4) }}>
                     <TouchableOpacity style={styles.addButton}
-                        onPress={() => { Actions.note({ values: { name: '' } }) }}
+                        onPress={() => {
+                            this.setState({
+                                disableInputs: true
+                            })
+                            Actions.note({ values: { name: '' } })
+                        }}
+                        disabled={this.state.disableInputs}
                     >
                         <Image source={require("../../assets/add.png")} style={{ width: 70, height: 70 }} ></Image>
                     </TouchableOpacity>
@@ -165,8 +176,6 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#F0F0F0',
         marginTop: 5
-        // justifyContent: 'center',
-        // alignItems: 'center',
     },
     backTextWhite: {
         color: '#FFF',
@@ -174,25 +183,6 @@ const styles = StyleSheet.create({
     rowFrontContainer: {
     },
     rowFront: {
-        // paddingLeft: 20,
-        // backgroundColor: 'yellow',
-        // borderColor: 'gray',
-        // borderBottomWidth: 0.5,
-        // borderRadius: 10,
-        // justifyContent: 'center',
-        // height: 70,
-        // marginTop: 0,
-        // marginLeft: 5,
-        // marginRight: 5,
-        // alignItems:'flex-start'
-        // // shadowColor: "#000",
-        // // shadowOffset: {
-        // //     width: 0,
-        // //     height: 5,
-        // // },
-        // // shadowOpacity: 1,
-        // // shadowRadius: 3.84,
-        // // elevation: 1,
         backgroundColor: '#e3e8fc',
         height: 65,
         marginTop: 5,

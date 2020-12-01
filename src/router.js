@@ -14,12 +14,14 @@ const RouterComp = () => {
                         hideNavBar={true}
                         animation='fade'
                         initial
+                        //type='refresh'
                     />
                     <Scene key='note'
                         component={NoteScreen}
                         title='Not Al'
                         hideNavBar={true}
                         animation='fade'
+                        //type='reset'
                     />
                 </Scene>
             </Scene>

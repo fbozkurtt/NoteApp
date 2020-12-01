@@ -38,16 +38,15 @@ export default class NoteScreen extends Component {
             const notesValueRaw = await AsyncStorage.getItem("notes");
             const notesValue = JSON.parse(notesValueRaw) ?? [];
             if (!notesValue.map(w => w.name == this.state.values.name).includes(true)) {
-                console.log("girdi");
                 notesValue.push(this.state.values);
                 notesValue[notesValue.length - 1].key = `${notesValue.length - 1}`;
-                //console.log(notesValue[-1]);
             }
             else {
                 index = this.findIndex(notesValue);
                 if (index > -1) {
                     if (this.state.values.note.length > 0) {
                         notesValue.splice(index, 1, this.state.values);
+                        notesValue[index].key = `${index}`;
                     }
                     else {
                         notesValue.splice(index, 1);
@@ -81,8 +80,8 @@ export default class NoteScreen extends Component {
                         <TouchableOpacity style={styles.button}
                             onPress={() => {
                                 this.save().then(() => {
-                                    //Actions.home()
-                                    Actions.reset("home");
+                                    //Actions.home();
+                                    Actions.reset('home');
                                     //this.props.navigation.popToTop();
                                 });
                             }}
